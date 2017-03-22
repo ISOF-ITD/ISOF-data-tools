@@ -5,7 +5,7 @@ Samlingar av verktyg för att hantera ISOF data.
 ## csvToJson
 Verktyg för att konvertera CSV-fil till JSON.
 
-`node csvToJson [input.csv] [output.json]` converterar input.csv till json.csv. Det använder första linjen i CSV-filen för att bestämma definera fälten.
+`node csvToJson [input.csv] [output.json]` converterar `input.csv` till `output.json`. Det använder första linjen i CSV-filen för att bestämma definera fälten.
 
 ### Exempel
 CSV fil med följande innehåll:
