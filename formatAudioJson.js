@@ -1,34 +1,106 @@
 var fs = require('fs');
 var _ = require('underscore');
 
-function createMediaArray(item) {
-	console.log(item.Titel_Allt.match(/\([0-9]*(\) \(| )[A-Z|a-z]*\)/g));
+function createMediaObject(mp3File, mediaTitles) {
+	var fileName = mp3File.split("\n")[0];
+
+	var mediaId = fileName.split(/file:SK([0-9]+)([A-Z])/g);
+//	console.log(Number(mediaId[1]));
+//	console.log(mediaId[2]);
+
+	var mediaTitle = _.find(mediaTitles, function(item) {
+		var regExString = '\\('+Number(mediaId[1])+' '+mediaId[2]+'[ I]*\\)';
+		var regEx = new RegExp(regExString);
+
+		if (item.match(regEx)) {
+//			console.log('RegEx: '+regExString+' = '+item);
+		}
+
+		return item.match(regEx);
+	}) || '';
+
+	return {
+		src: fileName.replace('file:', ''),
+		title: mediaTitle
+	};
 }
 
 fs.readFile(process.argv[2], function(err, fileData) {
 	var data = JSON.parse(fileData);
 
+	var processedData = [];
+
+	var lastAcc;
+	var workingObject;
+	var mediaTitles;
+
 	_.each(data, function(item, index) {
-		if (index > 5) return;
-		item.persons = _.map(item.PersPersId, function(personId, index) {
-			var personObj = {
-				id: personId
-			};
+		if (item.Acc) {
+			mediaTitles = item.Titel_Allt.split('\n \n').join('\n\n').split('\n\n');
 
-			personObj['name'] = item.PersNamn[index];
-			personObj['role'] = item.AccPersRoll[index];
+			item.media = [];
+			item.media.push(createMediaObject(item.MP3, mediaTitles));
 
-			return personObj;
-		});
+			delete item.MP3;
 
-		delete item.PersPersId;
-		delete item.PersNamn;
-		delete item.AccPersRoll;
+			item.persons = [];
+			item.persons.push({
+				name: item.Pers_Namn,
+				id: item.Pers_PersId,
+				role: item.AccPers_Roll
+			});
 
-		item.media = createMediaArray(item);
+			delete item.Pers_Namn;
+			delete item.Pers_PersId;
+			delete item.AccPers_Roll;
+
+			workingObject = item;
+		}
+		else {
+			if (item.MP3 != '') {
+				workingObject.media.push(createMediaObject(item.MP3, mediaTitles));
+			}
+
+			if (item.Pers_PersId && item.Pers_PersId != '') {			
+				workingObject.persons.push({
+					name: item.Pers_Namn,
+					id: item.Pers_PersId,
+					role: item.AccPers_Roll
+				});
+			}
+		}
+
+		if (item.Acc && item.Acc != lastAcc) {
+			lastAcc = item.Acc;
+
+			processedData.push(item);
+		}
 	});
 
-	fs.writeFile(process.argv[3], JSON.stringify(data, null, 2), function(error) {
+	_.each(processedData, function(item, index) {
+		var mediaTitles = item.Titel_Allt.split('\n \n').join('\n\n').split('\n\n');
+		console.log(mediaTitles.length == item.media.length);
+		if (mediaTitles.length != item.media.length) {
+			console.log(item.Acc);
+		}
+		var sortObj = _.invert(_.object(_.pairs(mediaTitles)));
+
+		item.media = _.sortBy(item.media, function(mediaItem) {
+			return sortObj[mediaItem.title]
+		});
+
+		if (item.persons) {
+			var personNames = _.pluck(item.persons, 'name');
+			console.log(personNames);
+			var lastPerson = personNames[personNames.length-1];
+			personNames.splice(-1, 1);
+			var newTitle = personNames.join(', ')+' och '+lastPerson;
+
+			console.log(newTitle);
+		}
+	});
+
+	fs.writeFile(process.argv[3], JSON.stringify(processedData, null, 2), function(error) {
 		if (error) {
 			console.log(error);
 		}
