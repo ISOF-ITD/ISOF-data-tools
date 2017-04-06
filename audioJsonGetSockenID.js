@@ -17,12 +17,14 @@ fs.readFile(process.argv[2], 'utf-8', function(error, fileData) {
 
 	var json = JSON.parse(fileData);
 
+	var notFound = [];
+
 	function processItem() {
 		var item = json[jsonIndex];
 
 		var searchCounty = item['Landsk AccOrt_Landsk_Landskap'].replace('län', '');
 
-		var query = 'SELECT socken.id, socken.name, harad.lan FROM socken INNER JOIN harad ON socken.harad = harad.id WHERE socken.name LIKE "'+item['Socken AccOrt_Sock_Socken']+'%" AND harad.lan LIKE "%'+searchCounty+'%"';
+		var query = 'SELECT socken.id, socken.name, harad.lan FROM socken INNER JOIN harad ON socken.harad = harad.id WHERE socken.name LIKE "'+item['Socken AccOrt_Sock_Socken']+'%" AND (harad.lan LIKE "%'+searchCounty+'%" OR harad.landskap LIKE "%'+searchCounty+'%")';
 		connection.query(query, function(error, result) {
 			if (result.length == 1) {
 /*
@@ -36,6 +38,9 @@ fs.readFile(process.argv[2], 'utf-8', function(error, fileData) {
 				console.log('------');
 */
 				item.sockenId = result[0].id;
+			}
+			if (result.length == 0) {
+				notFound.push('"'+item['Socken AccOrt_Sock_Socken']+'","'+item['Landsk AccOrt_Landsk_Landskap']+'"');
 			}
 
 			if (jsonIndex < json.length-1) {
@@ -54,6 +59,10 @@ fs.readFile(process.argv[2], 'utf-8', function(error, fileData) {
 					else {
 						console.log('Done!');
 						console.log(process.argv[2]+' populated with socken IDs');
+
+						notFound = _.uniq(notFound);
+
+						fs.writeFile(process.argv[2]+'-not-found.csv', notFound.join("\n"));
 					}
 				});
 			}

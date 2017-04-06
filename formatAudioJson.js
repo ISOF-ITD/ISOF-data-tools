@@ -90,13 +90,25 @@ fs.readFile(process.argv[2], function(err, fileData) {
 		});
 
 		if (item.persons) {
-			var personNames = _.pluck(item.persons, 'name');
-			console.log(personNames);
-			var lastPerson = personNames[personNames.length-1];
-			personNames.splice(-1, 1);
-			var newTitle = personNames.join(', ')+' och '+lastPerson;
+			var personNames = _.map(_.filter(item.persons, {role: 8}), function(person) {
+				var nameSplitted = person.name.split(', ');
+				nameSplitted.reverse();
+				return nameSplitted.join(' ').split('\n').join('');
+			});
 
-			console.log(newTitle);
+			if (personNames.length == 1) {
+				item.title = personNames[0];
+			}
+			else if (personNames.length > 1) {
+				var lastPerson = personNames[personNames.length-1];
+				personNames.splice(-1, 1);
+				var newTitle = personNames.join(', ')+' och '+lastPerson;
+
+				item.title = newTitle;
+			}
+			else {
+				item.title = 'Acc. '+item.Acc;
+			}
 		}
 	});
 

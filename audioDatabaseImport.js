@@ -43,7 +43,7 @@ fs.readFile(process.argv[2], function(error, fileData) {
 	var json = JSON.parse(fileData);
 
 	_.each(json, function(item) {
-		var recordQuery = 'INSERT INTO records (title, year, type, archive_id) VALUES ("'+item.Acc_nr_ny+'", "'+item.Inl_from+'", "inspelning", "'+item.Acc+'")';
+		var recordQuery = 'INSERT INTO records (title, year, type, archive_id) VALUES ("'+item.title+'", "'+item.Inl_from+'", "inspelning", "'+item.Acc+'")';
 
 		connection.query(recordQuery, function(recordQueryError, recordResult) {
 			if (recordQueryError) {
@@ -62,6 +62,16 @@ fs.readFile(process.argv[2], function(error, fileData) {
 					}
 				});
 			}
+			_.each(item.persons, function(personItem) {
+				var personQuery = 'INSERT INTO records_persons (record, person, relation) VALUES ('+recordResult.insertId+', '+personItem.id+', '+(personItem.role == 7 ? '"c"' : personItem.role == 8 ? '"i"' : '')+')';
+
+				connection.query(personQuery, function(personQueryError) {
+					if (personQueryError) {
+						console.log(personQueryError);
+					}
+				});
+			});
+
 			_.each(item.media, function(mediaItem) {
 				var mediaQuery = 'INSERT INTO media (title, source, type) VALUES ("'+mysql_real_escape_string(mediaItem.title)+'", "'+mediaItem.src+'", "audio")';
 
