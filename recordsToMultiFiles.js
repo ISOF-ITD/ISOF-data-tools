@@ -12,7 +12,7 @@ var connection = mysql.createConnection({
 
 connection.connect();
 
-connection.query('select id, title, text from records where type = "arkiv" OR type = "tryckt"', function(recordQueryError, recordResult) {
+connection.query('select id, title, text from records where (type = "arkiv" OR type = "tryckt")', function(recordQueryError, recordResult) {
 	var recordIndex = 0;
 
 	function writeFile() {

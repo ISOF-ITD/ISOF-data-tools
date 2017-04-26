@@ -15,5 +15,14 @@
   "bugs": {
     "url": "https://github.com/ISOF-ITD/ISOF-data-tools/issues"
   },
-  "homepage": "https://github.com/ISOF-ITD/ISOF-data-tools#readme"
+  "homepage": "https://github.com/ISOF-ITD/ISOF-data-tools#readme",
+  "dependencies": {
+    "java": "^0.8.0",
+    "lda": "^0.1.9",
+    "matilda": "0.0.2",
+    "natural": "^0.5.0",
+    "node-snowball": "^0.2.0",
+    "stopword": "^0.1.1",
+    "stopwords": "0.0.5"
+  }
 }
