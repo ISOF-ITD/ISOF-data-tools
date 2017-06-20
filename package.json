@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/ISOF-ITD/ISOF-data-tools#readme",
   "dependencies": {
+    "@turf/turf": "^4.4.0",
     "java": "^0.8.0",
     "lda": "^0.1.9",
     "matilda": "0.0.2",

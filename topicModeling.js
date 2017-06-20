@@ -5,8 +5,12 @@ var lda = require('lda');
 var stopword = require('stopword');
 var snowball = require('node-snowball');
 
+var esHost = 'https://'+(process.argv[4] ? process.argv[4]+'@' : '')+(process.argv[3] || 'localhost:9200');
+
+console.log(esHost);
+
 var client = new elasticsearch.Client({
-	host: 'localhost:9200',
+	host: esHost,
 //	log: 'trace'
 });
 
@@ -55,8 +59,7 @@ function createModels() {
 					var titleResult = lda(docTtitle, 10, 10, ['sv']);
 				}
 
-				console.log(hit._source.text);
-				console.log(result);
+				console.log(hit._source.title);
 
 				bulkBody.push({
 					update: {
