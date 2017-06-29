@@ -5,6 +5,12 @@ var lda = require('lda');
 var stopword = require('stopword');
 var snowball = require('node-snowball');
 
+if (process.argv.length < 5) {
+	console.log('node topicModeling.js [index name] [host] [login]');
+
+	return;
+}
+
 var esHost = 'https://'+(process.argv[4] ? process.argv[4]+'@' : '')+(process.argv[3] || 'localhost:9200');
 
 console.log(esHost);
@@ -68,6 +74,7 @@ function createModels() {
 						_id: hit._id
 					}
 				});
+
 				bulkBody.push({
 					doc: {
 						topics: _.map(result, function(item) {
@@ -75,10 +82,38 @@ function createModels() {
 								terms: item
 							};
 						}),
+						topics_graph: _.uniq(_.flatten(_.map(result, function(item) {
+							var terms = _.map(item, function(term) {
+								return term.term;
+							});
+
+							return terms;
+						}))),
+						topics_graph_all: _.map(result, function(item) {
+							var terms = _.map(item, function(term) {
+								return term.term;
+							});
+
+							return terms;
+						}),
 						title_topics: titleResult ? _.map(titleResult, function(item) {
 							return {
 								terms: item
 							};
+						}) : [],
+						title_topics_graph: titleResult ? _.uniq(_.flatten(_.map(titleResult, function(item) {
+							var terms = _.map(item, function(term) {
+								return term.term;
+							});
+
+							return terms;
+						}))) : [],
+						title_topics_graph_all: titleResult ? _.map(titleResult, function(item) {
+							var terms = _.map(item, function(term) {
+								return term.term;
+							});
+
+							return terms;
 						}) : []
 					}
 				})
