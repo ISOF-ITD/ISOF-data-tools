@@ -13,7 +13,7 @@ if (process.argv.length < 5) {
 
 var esHost = 'https://'+(process.argv[4] ? process.argv[4]+'@' : '')+(process.argv[3] || 'localhost:9200');
 
-console.log(esHost);
+console.log('esHost: '+esHost);
 
 var client = new elasticsearch.Client({
 	host: esHost,
@@ -25,6 +25,7 @@ var pageSize = 100;
 function createModels() {
 	client.search({
 		index: process.argv[2] || 'sagenkarta',
+
 		body: {
 			'query': {
 				'bool': {
@@ -50,12 +51,12 @@ function createModels() {
 				}
 			}
 		},
+
 		size: pageSize
 	}, function(error, response) {
 		var bulkBody = [];
 
 		_.each(response.hits.hits, function(hit) {
-			console.log(hit._id);
 			if (hit._source.text || hit._source.title) {			
 				var docText = snowball.stemword(stopword.removeStopwords(hit._source.text.split('<br />').join(' ').split('/n').join(' ').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,'').split(' '), stopword.sv), 'swedish');
 				var result = lda(docText, 10, 10, ['sv']);
@@ -64,8 +65,6 @@ function createModels() {
 					var docTtitle = snowball.stemword(stopword.removeStopwords(hit._source.title.split('<br />').join(' ').split('/n').join(' ').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,'').split(' '), stopword.sv), 'swedish');
 					var titleResult = lda(docTtitle, 10, 10, ['sv']);
 				}
-
-				console.log(hit._source.title);
 
 				bulkBody.push({
 					update: {
@@ -116,14 +115,18 @@ function createModels() {
 							return terms;
 						}) : []
 					}
-				})
+				});
+
 			}
 		});
 
+		console.log('bulkBody.length: '+bulkBody.length);
 		if (bulkBody.length > 0) {
+			console.log('client.bulk');
 			client.bulk({
 				body: bulkBody
 			}, function(error, bulkResponse) {
+				console.log(bulkResponse);
 				if (response.hits.hits.length == pageSize) {
 					createModels();
 				}

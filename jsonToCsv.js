@@ -1,12 +1,19 @@
 var fs = require('fs');
 var _ = require('underscore');
 
+if (process.argv.length < 4) {
+	console.log('node jsonToCsv.js [input json file] [output csv file]');
+
+	return;
+}
+
 fs.readFile(process.argv[2], function(err, fileData) {
 	function writeCsvRow(rowData) {
 		var fields = [];
 
 		for (var i = 0; i<rowData.length; i++) {
-			fields.push('"'+rowData[i]+'"');
+			var rowText = rowData[i].split('"').join('""');
+			fields.push('"'+rowText+'"');
 		}
 
 		csvString += fields.join(',')+'\n';
@@ -21,7 +28,6 @@ fs.readFile(process.argv[2], function(err, fileData) {
 	var fieldNames = data[0];
 
 	for (var field in fieldNames) {
-		console.log(field);
 		headerRow.push(field);
 	}
 	writeCsvRow(headerRow);

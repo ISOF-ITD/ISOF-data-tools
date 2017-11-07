@@ -2,6 +2,12 @@ var csvParse = require('csv-parse');
 var fs = require('fs');
 var _ = require('underscore');
 
+if (process.argv.length < 4) {
+	console.log('node csvToJson.js [csv file] [json file]');
+
+	return;
+}
+
 var parser = csvParse({
 	columns: true
 }, function(err, data){

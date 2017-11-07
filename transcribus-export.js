@@ -3,8 +3,14 @@ var os = require('os');
 var xml2js = require('xml2js');
 var _ = require('underscore');
 
-function path(dir, file) {
-	return dir.substr(dir.length-1, 1) == '\\' ? dir+file : dir+'\\'+file;
+if (process.argv.length < 4) {
+	console.log('node transcribus-export.js [input tei folder] [output json file]');
+
+	return;
+}
+
+function path(dir, files) {
+	return dir.substr(dir.length-1, 1) == '\\' ? dir+file : dir+'\\'+(files.join ? files.join('\\') : files);
 }
 
 function addslashes(str) {
@@ -14,30 +20,55 @@ function addslashes(str) {
 var transcriptionData = [];
 
 function exportText(dir) {
-	var accNr = dir.replace('_KLAR_', '').replace('_KLAR', '');
+	var files = fs.readdirSync(path(process.argv[2], [dir]));
 
-	var files = fs.readdirSync(path(process.argv[2], dir+'\\'+dir+'\\page'));
-	_.each(files, function(file) {
-		console.log(file);
+	var teiFile = _.find(files, function(file) {
+		return file.indexOf('.tei') > -1;
+	});
 
-		var fileData = fs.readFileSync(path(process.argv[2], dir+'\\'+dir+'\\page\\'+file));
+	var pageFolder = _.find(files, function(file) {
+		return fs.lstatSync(path(process.argv[2], [dir, file])).isDirectory(); 
+	});
 
-		var parser = new xml2js.Parser();
+	console.log('---------');
 
-		parser.parseString(fileData, function(err, result) {
-			var transcriptions = [];
+	console.log('teiFile: '+teiFile);
+	console.log('pageFolder: '+pageFolder);
 
-			_.each(result.PcGts.Page[0].TextRegion, function(textRegion) {
-				if (textRegion.TextEquiv) {
-					transcriptions.push(textRegion.TextEquiv[0].Unicode[0]);
-				}
+	var accNr = pageFolder.replace('_KLAR_', '').replace('_KLAR', '').replace('_HTR', '').replace('_METADATA', '');
+
+	console.log('accNr: '+accNr);
+
+	var teiFileContent = fs.readFileSync(path(process.argv[2], [dir, teiFile]));
+
+	var parser = new xml2js.Parser();
+
+	parser.parseString(teiFileContent, function(err, result) {
+		_.each(result.TEI.facsimile, function(page) {
+//			var zoneId = page.surface[0].zone ? page.surface[0].zone[0].$['xml:id'] : null;
+			var zoneId = page.$['xml:id'];
+
+			console.log(zoneId);
+
+			if (!zoneId) {
+				return;
+			}
+			var pageTextNode = _.find(result.TEI.text[0].body[0].p, function(p) {
+				return p.$.facs.indexOf(zoneId+'_') > -1;
 			});
 
-			transcriptionData.push({
-				accNr: accNr,
-				file: file,
-				transcription: transcriptions.join(os.EOL)
-			});
+			var imageFile = page.surface[0].graphic[0].$.url;
+
+			if (pageTextNode && pageTextNode._) {
+				var pageText = pageTextNode._;
+				pageText = pageText.split('\t').join('').split('\n').join(' ');
+
+				transcriptionData.push({
+					accNr: accNr,
+					file: imageFile,
+					transcription: pageText
+				});
+			}
 		});
 	});
 }
