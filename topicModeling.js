@@ -57,13 +57,15 @@ function createModels() {
 		var bulkBody = [];
 
 		_.each(response.hits.hits, function(hit) {
-			if (hit._source.text || hit._source.title) {			
-				var docText = snowball.stemword(stopword.removeStopwords(hit._source.text.split('<br />').join(' ').split('/n').join(' ').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,'').split(' '), stopword.sv), 'swedish');
-				var result = lda(docText, 10, 10, ['sv']);
+			if (hit._source.text || hit._source.title) {
+				if (hit._source.text && hit._source.text.length > 0) {
+					var docText = snowball.stemword(stopword.removeStopwords(hit._source.text.split('<br />').join(' ').split('/n').join(' ').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,'').split(' '), stopword.sv), 'swedish');
+					var result = lda(docText, 10, 10, ['sv']);
+				}
 
-				if (hit._source.title) {				
-					var docTtitle = snowball.stemword(stopword.removeStopwords(hit._source.title.split('<br />').join(' ').split('/n').join(' ').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,'').split(' '), stopword.sv), 'swedish');
-					var titleResult = lda(docTtitle, 10, 10, ['sv']);
+				if (hit._source.title && hit._source.title.length != '') {
+					var docTitle = _.without(snowball.stemword(stopword.removeStopwords(hit._source.title.split('<br />').join(' ').split('/n').join(' ').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,'').split(' '), stopword.sv), 'swedish'), '');
+					var titleResult = lda(docTitle, 10, 10, ['sv']);
 				}
 
 				bulkBody.push({
@@ -76,25 +78,25 @@ function createModels() {
 
 				bulkBody.push({
 					doc: {
-						topics: _.map(result, function(item) {
+						topics: result ? _.map(result, function(item) {
 							return {
 								terms: item
 							};
-						}),
-						topics_graph: _.uniq(_.flatten(_.map(result, function(item) {
+						}) : [],
+						topics_graph: result ? _.uniq(_.flatten(_.map(result, function(item) {
 							var terms = _.map(item, function(term) {
 								return term.term;
 							});
 
 							return terms;
-						}))),
-						topics_graph_all: _.map(result, function(item) {
+						}))) : [],
+						topics_graph_all: result ? _.map(result, function(item) {
 							var terms = _.map(item, function(term) {
 								return term.term;
 							});
 
 							return terms;
-						}),
+						}) : [],
 						title_topics: titleResult ? _.map(titleResult, function(item) {
 							return {
 								terms: item
