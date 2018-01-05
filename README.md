@@ -51,3 +51,62 @@ CSV fil med följande innehåll:
   }
 ]
 ```
+
+## jsonToCsv
+Verktyg för att konvertera JSON-fil till CSV.
+
+`node jsonToCsv [input.json] [output.csv]` converterar `input.json` (som innehåller array) till `output.csv`.
+
+## jsonGetSocken
+Verktyg för att hämta socken ID och lägga till en JSON fil. Den användar socken namn fält och landskap/län fält i JSON data för att hitta ID:et och behöver koppla direkt till svenska_sagor databasen (på localhost).
+
+`node jsonInsertSockenID.js [input json file] [output json file] [landskap field] [socken field] [write not-found report (true|false)]`
+
+### Exempel
+`node jsonGetSocken.js input\data.json output\data-with-sockenid.json "Landsk AccOrt_Landsk::Landskap" "Socken AccOrt_Sock::Socken" true` hämtar socken ID för följande JSON fil:
+
+```json
+[
+  {
+    "!Acc": "221685",
+    "Acc_nr_ny": "VFF02209",
+    "Titel_Allt": "Fotografi.",
+    "Inl_from": "",
+    "Form Acc_Alla::Omfång": "",
+    "Land AccOrt::Land": "Sverige",
+    "Landsk AccOrt_Landsk::Landskap": "Småland",
+    "Socken AccOrt_Sock::Socken": "Sandsjö, Norra"
+  }
+]
+```
+
+...och skriver ny fil med socken ID för Norra Sandsjö socken:
+
+```json
+[
+  {
+    "!Acc": "221685",
+    "Acc_nr_ny": "VFF02209",
+    "Titel_Allt": "Fotografi.",
+    "Inl_from": "",
+    "Form Acc_Alla::Omfång": "",
+    "Land AccOrt::Land": "Sverige",
+    "Landsk AccOrt_Landsk::Landskap": "Småland",
+    "Socken AccOrt_Sock::Socken": "Sandsjö, Norra",
+    "socken": {
+      "id": 527,
+      "name": "Norra Sandsjö sn",
+      "location": {
+        "lat": 57.466991,
+        "lon": 14.766099
+      },
+      "harad": "Västra hd",
+      "harad_id": 104,
+      "landskap": "Småland",
+      "county": "Jönköpings län",
+      "lm_id": "0638"
+    }
+  }
+]
+```
+
