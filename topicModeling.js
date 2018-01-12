@@ -57,7 +57,7 @@ function createModels() {
 		var bulkBody = [];
 
 		_.each(response.hits.hits, function(hit) {
-			if (hit._source.text || hit._source.title) {			
+			if (hit._source.text || hit._source.title) {
 				var docText = snowball.stemword(stopword.removeStopwords(hit._source.text.split('<br />').join(' ').split('/n').join(' ').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,'').split(' '), stopword.sv), 'swedish');
 				var result = lda(docText, 10, 10, ['sv']);
 

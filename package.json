@@ -18,9 +18,11 @@
   "homepage": "https://github.com/ISOF-ITD/ISOF-data-tools#readme",
   "dependencies": {
     "@turf/turf": "^4.4.0",
+    "fast-levenshtein": "^2.0.6",
     "java": "^0.8.0",
     "lda": "^0.1.9",
     "matilda": "0.0.2",
+    "minimist": "^1.2.0",
     "natural": "^0.5.0",
     "node-snowball": "^0.2.0",
     "stopword": "^0.1.1",

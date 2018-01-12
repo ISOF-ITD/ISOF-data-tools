@@ -9,10 +9,11 @@ if (process.argv.length < 4) {
 
 fs.readFile(process.argv[2], function(err, fileData) {
 	function writeCsvRow(rowData) {
+		console.log(rowData);
 		var fields = [];
 
 		for (var i = 0; i<rowData.length; i++) {
-			var rowText = rowData[i].split('"').join('""');
+			var rowText = rowData[i] ? rowData[i].split('"').join('""') : '';
 			fields.push('"'+rowText+'"');
 		}
 
