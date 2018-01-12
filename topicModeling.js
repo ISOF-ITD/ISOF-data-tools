@@ -6,7 +6,7 @@ var stopword = require('stopword');
 var snowball = require('node-snowball');
 
 if (process.argv.length < 5) {
-	console.log('node topicModeling.js [index name] [host] [login]');
+	console.log('node topicModeling.js [index name] [host] [login] [es query]');
 
 	return;
 }
@@ -23,34 +23,40 @@ var client = new elasticsearch.Client({
 var pageSize = 100;
 
 function createModels() {
-	client.search({
-		index: process.argv[2] || 'sagenkarta',
-
-		body: {
-			'query': {
-				'bool': {
-					'must': [
-						{
-							'exists': {
-								'field': 'text'
-							}
+	var query = {
+		'query': process.argv[5] ? {
+			'query_string': {
+				'query': process.argv[5]
+			}
+		} : {
+			'bool': {
+				'must': [
+					{
+						'exists': {
+							'field': 'text'
 						}
-					],
-					'must_not': [
-						{
-							'nested': {
-								'path': 'topics',
-								'query': {
-									'query_string': {
-										'query': '*'
-									}
+					}
+				],
+				'must_not': [
+					{
+						'nested': {
+							'path': 'topics',
+							'query': {
+								'query_string': {
+									'query': '*'
 								}
 							}
 						}
-					]
-				}
+					}
+				]
 			}
-		},
+		}
+	};
+
+	client.search({
+		index: process.argv[2] || 'sagenkarta',
+
+		body: query,
 
 		size: pageSize
 	}, function(error, response) {
