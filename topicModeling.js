@@ -136,7 +136,6 @@ function createModels() {
 			client.bulk({
 				body: bulkBody
 			}, function(error, bulkResponse) {
-				bulkResponse.items = '[...]';
 				console.log(bulkResponse);
 				if (response.hits.hits.length == pageSize) {
 					createModels();
