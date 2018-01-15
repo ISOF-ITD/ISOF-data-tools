@@ -64,6 +64,8 @@ function createModels() {
 
 		_.each(response.hits.hits, function(hit) {
 			if (hit._source.text || hit._source.title) {
+				console.log(hit._source.title);
+
 				if (hit._source.text && hit._source.text.length > 0) {
 					var docText = snowball.stemword(stopword.removeStopwords(hit._source.text.split('<br />').join(' ').split('/n').join(' ').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,'').split(' '), stopword.sv), 'swedish');
 					var result = lda(docText, 10, 10, ['sv']);
@@ -134,6 +136,7 @@ function createModels() {
 			client.bulk({
 				body: bulkBody
 			}, function(error, bulkResponse) {
+				bulkResponse.items = '[...]';
 				console.log(bulkResponse);
 				if (response.hits.hits.length == pageSize) {
 					createModels();
