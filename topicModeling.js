@@ -65,11 +65,19 @@ function createModels() {
 				console.log(hit._source.title);
 
 				if (hit._source.text && hit._source.text.length > 0) {
-					var result = TopicModeling.createModel(hit._source.text);
+					try {
+						var result = TopicModeling.createModel(hit._source.text);
+					} catch() {
+						var result = [];
+					}
 				}
 
 				if (hit._source.title && hit._source.title.length != '') {
-					var titleResult = TopicModeling.createModel(hit._source.title);
+					try {
+						var titleResult = TopicModeling.createModel(hit._source.title);
+					} catch() {
+						var titleResult = [];
+					}
 				}
 
 				bulkBody.push({
