@@ -67,7 +67,7 @@ function createModels() {
 				if (hit._source.text && hit._source.text.length > 0) {
 					try {
 						var result = TopicModeling.createModel(hit._source.text);
-					} catch() {
+					} catch(e) {
 						var result = [];
 					}
 				}
@@ -75,7 +75,7 @@ function createModels() {
 				if (hit._source.title && hit._source.title.length != '') {
 					try {
 						var titleResult = TopicModeling.createModel(hit._source.title);
-					} catch() {
+					} catch(e) {
 						var titleResult = [];
 					}
 				}
