@@ -2,7 +2,7 @@ var fs = require('fs');
 var _ = require('underscore');
 
 if (process.argv.length < 5) {
-	console.log('node formatFragolist.js --idField=[id field] --archiveIdField=[archive id field] --archive=[archive] --questionColumns=[question column number] --input=[input json file] --output=[output json file] --materialType=[materialType] --startId=[start id] --idPrefix=[id prefix] --personIdField=[person id field] --personStartId=[person start id] --personIdPrefix=[person id prefix]');
+	console.log('node formatWebbfragolist.js --idField=[id field] --archiveIdField=[archive id field] --archive=[archive] --questionColumns=[question column number] --input=[input json file] --output=[output json file] --materialType=[materialType] --startId=[start id] --idPrefix=[id prefix] --personIdField=[person id field] --personStartId=[person start id] --personIdPrefix=[person id prefix]');
 
 	return;
 }
@@ -65,15 +65,15 @@ fs.readFile(argv.input, function(err, fileData) {
 
 		var textContent = _.map(questionColumnsIndexes, function(index, mapIndex) {
 			return (mapIndex+1)+': '+item[objectKeys[index]];
-		}).join('\n');
+		}).join('<br/>');
 
 		var questions = _.map(questionColumnsIndexes, function(index, mapIndex) {
 			return (mapIndex+1)+': '+objectKeys[index];
-		}).join('\n');
+		}).join('<br/>');
 
 		var workingObject = {
 			id: id,
-			title: 'Svar',
+			title: item['Titel'],
 			text: textContent,
 			materialtype: materialType,
 			year: item['Datum'].split(' ')[0],
@@ -89,16 +89,14 @@ fs.readFile(argv.input, function(err, fileData) {
 				archive: argv.archive || null
 			}
 		};
-/*
-		if (categoryIdField != undefined && categoryIdField != '' && categoryNameField != undefined && categoryNameField != '') {
+
+		if (item['Kategori'] && item['Kategori'] != '') {
 			workingObject.taxonomy = [
 				{
-					category: item[categoryIdField],
-					name: item[categoryNameField]
+					category: item['Kategori']
 				}
 			];
 		}
-*/
 
 		var personId = personIdPrefix+(personStartId ? currentPersonId : item[personIdField]);
 

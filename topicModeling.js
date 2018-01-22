@@ -1,9 +1,7 @@
 var _ = require('underscore');
 var elasticsearch = require('elasticsearch');
 
-var lda = require('lda');
-var stopword = require('stopword');
-var snowball = require('node-snowball');
+var TopicModeling = require('./lib/topic-modeling');
 
 if (process.argv.length < 5) {
 	console.log('node topicModeling.js [index name] [host] [login] [es query]');
@@ -67,13 +65,11 @@ function createModels() {
 				console.log(hit._source.title);
 
 				if (hit._source.text && hit._source.text.length > 0) {
-					var docText = snowball.stemword(stopword.removeStopwords(hit._source.text.split('<br />').join(' ').split('/n').join(' ').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,'').split(' '), stopword.sv), 'swedish');
-					var result = lda(docText, 10, 10, ['sv']);
+					var result = TopicModeling.createModel(hit._source.text);
 				}
 
 				if (hit._source.title && hit._source.title.length != '') {
-					var docTitle = _.without(snowball.stemword(stopword.removeStopwords(hit._source.title.split('<br />').join(' ').split('/n').join(' ').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,'').split(' '), stopword.sv), 'swedish'), '');
-					var titleResult = lda(docTitle, 10, 10, ['sv']);
+					var titleResult = TopicModeling.createModel(hit._source.title);
 				}
 
 				bulkBody.push({
