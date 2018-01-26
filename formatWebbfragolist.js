@@ -100,10 +100,12 @@ fs.readFile(argv.input, function(err, fileData) {
 
 		var personId = personIdPrefix+(personStartId ? currentPersonId : item[personIdField]);
 
+		var genderStr = item['Man/kvinna/annat'] || item['Man/kvinna/annat?'] || item['Kön'] || '';
+
 		var personObj = {
 			id: personId,
-			name: item['Man/kvinna/annat']+' född '+item['Födelseår (ÅÅÅÅ)'],
-			gender: getGender(item['Man/kvinna/annat']),
+			name: (genderStr == '' ? 'Person' : genderStr)+' född '+item['Födelseår (ÅÅÅÅ)'],
+			gender: getGender(genderStr),
 			birth_year: item['Födelseår (ÅÅÅÅ)'],
 			relation: 'i'
 		};
