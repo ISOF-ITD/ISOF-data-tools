@@ -66,6 +66,7 @@ function createModels() {
 					try {
 						var result = TopicModeling.createModel(hit._source.text, argv.numtopics || 10, argv.numterms || 10);
 					} catch(e) {
+						console.log(e);
 						var result = [];
 					}
 				}
@@ -74,6 +75,7 @@ function createModels() {
 					try {
 						var titleResult = TopicModeling.createModel(hit._source.title, argv.numtopics || 10, argv.numterms || 10);
 					} catch(e) {
+						console.log(e);
 						var titleResult = [];
 					}
 				}
