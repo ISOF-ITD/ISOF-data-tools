@@ -21,7 +21,6 @@ var client = new elasticsearch.Client({
 });
 
 var pageSize = 100;
-var currentPage = 0;
 
 var topicsField = argv.topics_field || 'topics';
 
@@ -40,25 +39,9 @@ function createModels() {
 						}
 					}
 				]
-/*
-				'must_not': [
-					{
-						'nested': {
-							'path': 'topics',
-							'query': {
-								'query_string': {
-									'query': '*'
-								}
-							}
-						}
-					}
-				]
-*/
 			}
 		}
 	};
-
-	console.log('Fetch from: '+currentPage);
 
 	client.search({
 		index: argv.index || 'sagenkarta',
@@ -66,9 +49,9 @@ function createModels() {
 		body: query,
 
 		size: pageSize,
-		from: currentPage,
-		sort: 'id'
-	}, function(error, response) {
+		sort: 'id',
+		scroll: '120s'
+	}, function fetchMore(error, response) {
 		if (!response.hits) {
 			console.log(response);
 		}
@@ -163,14 +146,18 @@ function createModels() {
 			}, function(error, bulkResponse) {
 				console.log(bulkResponse);
 				if (response.hits.hits.length == pageSize) {
-					currentPage += pageSize;
-					createModels();
+					client.scroll({
+						scrollId: response._scroll_id,
+						scroll: '120s'
+					}, fetchMore);
 				}
 			});
 		}
 		else if (response.hits.hits.length == pageSize) {
-			currentPage += pageSize;
-			createModels();
+			client.scroll({
+				scrollId: response._scroll_id,
+				scroll: '120s'
+			}, fetchMore);
 		}
 	});
 }
