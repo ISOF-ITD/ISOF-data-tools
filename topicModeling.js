@@ -58,6 +58,8 @@ function createModels() {
 		}
 	};
 
+	console.log('Fetch from: '+currentPage);
+
 	client.search({
 		index: argv.index || 'sagenkarta',
 
