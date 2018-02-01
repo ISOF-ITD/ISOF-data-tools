@@ -21,6 +21,7 @@ var client = new elasticsearch.Client({
 });
 
 var pageSize = 100;
+var currentPage = 0;
 
 var topicsField = argv.topics_field || 'topics';
 
@@ -62,7 +63,8 @@ function createModels() {
 
 		body: query,
 
-		size: pageSize
+		size: pageSize,
+		from: currentPage
 	}, function(error, response) {
 		if (!response.hits) {
 			console.log(response);
@@ -158,11 +160,13 @@ function createModels() {
 			}, function(error, bulkResponse) {
 				console.log(bulkResponse);
 				if (response.hits.hits.length == pageSize) {
+					currentPage += pageSize;
 					createModels();
 				}
 			});
 		}
 		else if (response.hits.hits.length == pageSize) {
+			currentPage += pageSize;
 			createModels();
 		}
 	});
