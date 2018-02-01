@@ -66,7 +66,8 @@ function createModels() {
 		body: query,
 
 		size: pageSize,
-		from: currentPage
+		from: currentPage,
+		sort: '_id'
 	}, function(error, response) {
 		if (!response.hits) {
 			console.log(response);
