@@ -22,7 +22,7 @@ fs.readFile(argv.input, 'utf-8', function(error, fileData) {
 
 	_.each(data, function(item) {
 		var filePath = item[filenameField];
-		var fileName = path.basename(filePath);
+		var fileName = fileLocation ? path.basename(filePath) : filePath;
 
 		var copyToPath = path.format({
 			dir: outputFolder,
