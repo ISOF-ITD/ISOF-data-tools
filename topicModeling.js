@@ -11,7 +11,7 @@ if (process.argv.length < 5) {
 
 var argv = require('minimist')(process.argv.slice(2));
 
-var esHost = 'https://'+(argv.login ? argv.login+'@' : '')+(argv.host || 'localhost:9200');
+var esHost = (argv.host.indexOf('https://') > -1 ? 'https://' : 'http://')+(argv.login ? argv.login+'@' : '')+(argv.host.replace('http://', '').replace('https://', ''));
 
 console.log('esHost: '+esHost);
 

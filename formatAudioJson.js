@@ -1,6 +1,16 @@
 var fs = require('fs');
 var _ = require('underscore');
 
+if (process.argv.length < 5) {
+	console.log('node formatAudioJson.js --idField=[id field] --mediaField=[media field] --input=[input json file] --output=[output json file]');
+
+	return;
+}
+
+var argv = require('minimist')(process.argv.slice(2));
+var idField = argv.idField;
+var mediaField = argv.mediaField;
+
 function createMediaObject(mp3File, mediaTitles) {
 	var fileName = mp3File.split("\n")[0];
 
@@ -25,7 +35,7 @@ function createMediaObject(mp3File, mediaTitles) {
 	};
 }
 
-fs.readFile(process.argv[2], function(err, fileData) {
+fs.readFile(argv.input, function(err, fileData) {
 	var data = JSON.parse(fileData);
 
 	var processedData = [];
@@ -35,43 +45,24 @@ fs.readFile(process.argv[2], function(err, fileData) {
 	var mediaTitles;
 
 	_.each(data, function(item, index) {
-		if (item.Acc) {
+		if (item[idField]) {
 			mediaTitles = item.Titel_Allt.split('\n \n').join('\n\n').split('\n\n');
 
 			item.media = [];
-			item.media.push(createMediaObject(item.MP3, mediaTitles));
+			item.media.push(createMediaObject(item[mediaField], mediaTitles));
 
-			delete item.MP3;
-
-			item.persons = [];
-			item.persons.push({
-				name: item.Pers_Namn,
-				id: item.Pers_PersId,
-				role: item.AccPers_Roll
-			});
-
-			delete item.Pers_Namn;
-			delete item.Pers_PersId;
-			delete item.AccPers_Roll;
+			delete item[mediaField];
 
 			workingObject = item;
 		}
 		else {
-			if (item.MP3 != '') {
-				workingObject.media.push(createMediaObject(item.MP3, mediaTitles));
-			}
-
-			if (item.Pers_PersId && item.Pers_PersId != '') {			
-				workingObject.persons.push({
-					name: item.Pers_Namn,
-					id: item.Pers_PersId,
-					role: item.AccPers_Roll
-				});
+			if (item[mediaField] != '') {
+				workingObject.media.push(createMediaObject(item[mediaField], mediaTitles));
 			}
 		}
 
-		if (item.Acc && item.Acc != lastAcc) {
-			lastAcc = item.Acc;
+		if (item[idField] && item[idField] != lastAcc) {
+			lastAcc = item[idField];
 
 			processedData.push(item);
 		}
@@ -81,38 +72,16 @@ fs.readFile(process.argv[2], function(err, fileData) {
 		var mediaTitles = item.Titel_Allt.split('\n \n').join('\n\n').split('\n\n');
 		console.log(mediaTitles.length == item.media.length);
 		if (mediaTitles.length != item.media.length) {
-			console.log(item.Acc);
+			console.log(item[idField]);
 		}
 		var sortObj = _.invert(_.object(_.pairs(mediaTitles)));
 
 		item.media = _.sortBy(item.media, function(mediaItem) {
 			return sortObj[mediaItem.title]
 		});
-
-		if (item.persons) {
-			var personNames = _.map(_.filter(item.persons, {role: 8}), function(person) {
-				var nameSplitted = person.name.split(', ');
-				nameSplitted.reverse();
-				return nameSplitted.join(' ').split('\n').join('');
-			});
-
-			if (personNames.length == 1) {
-				item.title = personNames[0];
-			}
-			else if (personNames.length > 1) {
-				var lastPerson = personNames[personNames.length-1];
-				personNames.splice(-1, 1);
-				var newTitle = personNames.join(', ')+' och '+lastPerson;
-
-				item.title = newTitle;
-			}
-			else {
-				item.title = 'Acc. '+item.Acc;
-			}
-		}
 	});
 
-	fs.writeFile(process.argv[3], JSON.stringify(processedData, null, 2), function(error) {
+	fs.writeFile(argv.output, JSON.stringify(processedData, null, 2), function(error) {
 		if (error) {
 			console.log(error);
 		}
