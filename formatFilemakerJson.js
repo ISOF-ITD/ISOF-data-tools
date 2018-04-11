@@ -35,7 +35,7 @@ var getGender = function(gender) {
 		return 'm'
 	}
 	else {
-		return 'unknown';
+		return 'o';
 	}
 }
 
@@ -45,7 +45,9 @@ var getRelation = function(relation) {
 	i = informant
 	recorder = intervjuare
 	*/
-	return relation == '1' || relation == '6' || relation == '8' ? 'c' : relation == '7' ? 'i' : '';
+//	return relation == '1' || relation == '6' ? 'c' : relation == '7' ? 'i' : '';
+//	return relation == '7' ? 'c' : relation == '8' ? 'i' : '';
+	return relation == '1' ? 'c' : relation == '7' ? 'i' : '';
 }
 
 var createPersonObject = function(item) {
@@ -71,13 +73,17 @@ var createMediaObject = function(mp3File, mediaTitles, item) {
 	var fullPath = mp3File.split("\n")[1];
 
 	var mediaId = fileName.split(/file:SK([0-9]+)([A-Z])/g);
-console.log(item)
+
 	var mediaTitle = _.find(mediaTitles, function(item) {
 		var regExString = '\\('+Number(mediaId[1])+' '+mediaId[2]+'[ (I|V]*\\)';
 		var regEx = new RegExp(regExString);
 
 		return item.match(regEx);
 	}) || item[idField];
+
+	if (item['Titel_Allt'] && item['Titel_Allt'] != '') {
+		mediaTitle = item['Titel_Allt'];
+	}
 
 	return {
 		source: fileName.indexOf('filewin://') > -1 ? fileName.split('/')[fileName.split('/').length-1] : fileName.replace('file:', ''),
@@ -204,7 +210,7 @@ fs.readFile(argv.input, function(err, fileData) {
 
 				workingObject.title = titlePrefix+title;
 
-				if (mediaTitles.length == 1 && workingObject.media.length == 1 && workingObject.media[0].title == '') {
+				if (mediaTitles.length == 1 && workingObject.media &&  workingObject.media.length == 1 && workingObject.media[0].title == '') {
 					workingObject.text = mediaTitles[0];
 				}
 			}

@@ -3,6 +3,8 @@ var _ = require('underscore');
 var fs = require('fs');
 var levenshtein = require('fast-levenshtein');
 
+var config = require('./config')
+
 if (process.argv.length < 4) {
 	console.log('node jsonInsertSockenID.js --input=[input json file] --output=[output json file] --landskap_field=[landskap field] --socken_field[socken field] --socken_id_field=[socken_id field] --report=[write not-found report (true|false)]');
 
@@ -15,10 +17,10 @@ var landskapField = argv.landskap_field;
 var sockenField = argv.socken_field;
 
 var connection = mysql.createConnection({
-	host: 'localhost',
-	user: 'root',
-	password: '',
-	database: 'svenska_sagor'
+	host: config.host,
+	user: config.user,
+	password: config.password,
+	database: config.database
 });
 
 connection.connect();
