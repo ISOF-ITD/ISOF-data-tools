@@ -18,6 +18,7 @@
   "homepage": "https://github.com/ISOF-ITD/ISOF-data-tools#readme",
   "dependencies": {
     "@turf/turf": "^4.4.0",
+    "elasticsearch": "^14.2.2",
     "fast-levenshtein": "^2.0.6",
     "java": "^0.8.0",
     "lda": "^0.1.9",
