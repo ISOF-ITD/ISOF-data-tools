@@ -2,7 +2,7 @@ var fs = require('fs');
 var _ = require('underscore');
 
 if (process.argv.length < 5) {
-	console.log('node formatFilemakerJson.js --idField=[id field] --joinIdField=[id field to append to main id]--archiveIdField=[archive id field] --input=[input json file] --output=[output json file] --materialType=[materialType] --categoryIdField=[categoryIdField] --categoryNameField=[categoryNameField] --idPrefix=[id prefix] --reversePersonName=[yes|no] --personIdPrefix=[person id prefix] --personNamesAsTitle=[yes|no] --personNamesTitleFilter=[c|i] --titlePrefix=[title prefix] --formatMediaTitles=[yes|no] --mediaField=[media field]');
+	console.log('node formatFilemakerJson.js --idField=[id field] --joinIdField=[id field to append to main id]--archiveIdField=[archive id field] --input=[input json file] --output=[output json file] --materialType=[materialType] --staticCategories=[category id comma seperated] --categoryIdField=[categoryIdField] --categoryNameField=[categoryNameField] --idPrefix=[id prefix] --reversePersonName=[yes|no] --personIdPrefix=[person id prefix] --personNamesAsTitle=[yes|no] --personNamesTitleFilter=[c|i] --titlePrefix=[title prefix] --formatMediaTitles=[yes|no] --mediaField=[media field]');
 
 	return;
 }
@@ -15,6 +15,7 @@ var archiveIdField = argv.archiveIdField;
 var idPrefix = argv.idPrefix || '';
 var categoryIdField = argv.categoryIdField;
 var categoryNameField = argv.categoryNameField;
+var staticCategories = argv.staticCategories;
 var materialType = argv.materialType;
 var mediaField = argv.mediaField;
 var personIdPrefix = argv.personIdPrefix || '';
@@ -119,7 +120,16 @@ fs.readFile(argv.input, function(err, fileData) {
 				}
 			};
 
-			if (categoryIdField != undefined && categoryIdField != '' && categoryNameField != undefined && categoryNameField != '') {
+			if (staticCategories) {
+				var categories = staticCategories.split(',');
+
+				workingObject.taxonomy = _.map(categories, function(category) {
+					return {
+						category: category
+					};
+				})
+			}
+			else if (categoryIdField != undefined && categoryIdField != '' && categoryNameField != undefined && categoryNameField != '') {
 				workingObject.taxonomy = [
 					{
 						category: item[categoryIdField],
@@ -142,17 +152,24 @@ fs.readFile(argv.input, function(err, fileData) {
 				workingObject.places = [item.socken];
 			}
 
-			if (argv.formatMediaTitles == 'yes' && item[mediaField] != '') {
-				mediaTitles = item.Titel_Allt.split('\n \n').join('\n\n').split('\n\n');
+			if (argv.formatMediaTitles == 'yes' || item[mediaField] != '') {
+				if (argv.formatMediaTitles == 'yes') {
+					mediaTitles = item.Titel_Allt.split('\n \n').join('\n\n').split('\n\n');
+				}
+				else {
+					mediaTitles = [];
+				}
 
 				if (!workingObject.metadata) {
 					workingObject.metadata = [];
 				}
 
-				workingObject.metadata.push({
-					type: 'dialektkarta_titlar',
-					value: item.Titel_Allt
-				});
+				if (argv.formatMediaTitles == 'yes') {
+					workingObject.metadata.push({
+						type: 'dialektkarta_titlar',
+						value: item.Titel_Allt
+					});
+				}
 
 				// Om vi har media titles, då sätter vi text till ''
 				if (mediaTitles.length > 1) {
@@ -176,7 +193,7 @@ fs.readFile(argv.input, function(err, fileData) {
 				workingObject.places.push(item.socken);
 			}
 
-			if (argv.formatMediaTitles == 'yes' && item[mediaField] != '') {
+			if (argv.formatMediaTitles == 'yes' || item[mediaField] != '') {
 				workingObject.media.push(createMediaObject(item[mediaField], mediaTitles, item));
 			}
 		}

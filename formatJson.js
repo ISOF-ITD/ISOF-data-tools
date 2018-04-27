@@ -3,7 +3,7 @@ var path = require('path');
 var _ = require('underscore');
 
 if (process.argv.length < 5) {
-	console.log('node formatJson.js --input=[input json file] --output=[output json file] --idField --idPrefix --titleField --titleFields --titleFieldsSeparator --titlePrefix --staticTitle --textField --staticText --yearField --taxonomyField --archiveIdField --archiveField --staticArchive --typeField --staticType --placeField --informantNameField --informantNameFields --informantIdField --informantGenderField --informantBirthYearField --collectorNameField --collectorNameFields --collectorIdField --collectorGenderField --collectorBirthYearField --personIdPrefix --personNameFieldsSeparator --mediaSourceField --mediaSourcePrefix --mediaSourceSuffix --mediaTypeField --staticMediaType --trace=[true|false]');
+	console.log('node formatJson.js --input=[input json file] --output=[output json file] --idField --idPrefix --titleField --titleFields --titleFieldsSeparator --titlePrefix --staticTitle --textField --staticText --countryField --staticCountry --yearField --taxonomyField --staticTaxonomy --archiveIdField --archiveField --staticArchive --typeField --staticType --placeField --placeIdField --informantNameField --informantNameFields --informantIdField --informantGenderField --informantBirthYearField --collectorNameField --collectorNameFields --collectorIdField --collectorGenderField --collectorBirthYearField --personIdPrefix --personNameFieldsSeparator --mediaSourceField --mediaSourcePrefix --mediaSourceSuffix --mediaTypeField --staticMediaType --trace=[true|false] --metadataFields=[metadata_type:value_field,metadata_type:value_field,...]');
 
 	return;
 }
@@ -35,15 +35,22 @@ var staticText = argv.staticText;
 
 var yearField = argv.yearField;
 var taxonomyField = argv.taxonomyField;
+var staticTaxonomy = argv.staticTaxonomy;
 
 var archiveIdField = argv.archiveIdField;
 var archiveField = argv.archiveField;
 var staticArchive = argv.staticArchive;
 
+var countryField = argv.countryField;
+var staticCountry = argv.staticCountry;
+
 var typeField = argv.typeField;
 var staticType = argv.staticType;
 
+var metadataFields = argv.metadataFields;
+
 var placeField = argv.placeField;
+var placeIdField = argv.placeIdField;
 
 var informantNameField = argv.informantNameField;
 var informantNameArrayField = argv.informantNameArrayField;
@@ -95,7 +102,7 @@ fs.readFile(argv.input, function(err, fileData) {
 				workingObject.title = (titlePrefix || '')+fieldValues.join(titleFieldsSeparator || ' ');
 			}
 			else if (titleField || staticTitle) {
-				workingObject.title = (titlePrefix || '')+staticTitle || item[titleField];
+				workingObject.title = (titlePrefix ? titlePrefix : '')+(staticTitle || item[titleField]);
 			}
 		}
 
@@ -107,21 +114,38 @@ fs.readFile(argv.input, function(err, fileData) {
 			workingObject.year = validateDate(item[yearField]);
 		}
 
+		if (staticTaxonomy) {
+			var taxonomyItems = staticTaxonomy.split(',');
+
+			workingObject.taxonomy = _.map(taxonomyItems, function(taxonomy) {
+				return {
+					category: taxonomy
+				}
+			});
+		}
 		if (taxonomyField) {
-			workingObject.taxonomy = [{
+			if (!workingObject.taxonomy) {
+				workingObject.taxonomy = [];
+			}
+
+			workingObject.taxonomy = workingObject.taxonomy.concat([{
 				category: item[taxonomyField]
-			}];
+			}]);
 		}
 
-		if (archiveField || archiveIdField || staticArchive) {
+		if (archiveField || archiveIdField || staticArchive || countryField || staticCountry) {
 			var archiveObject = {};
 
 			if (archiveField || staticArchive) {
 				archiveObject.archive = staticArchive ? staticArchive : item[archiveField];
 			}
 
+			if (countryField || staticCountry) {
+				archiveObject.country = staticCountry ? staticCountry : item[countryField];
+			}
+
 			if (archiveIdField) {
-				archiveObject.archive = item[archiveIdField];
+				archiveObject.archive_id = item[archiveIdField];
 			}
 
 			workingObject.archive = archiveObject;
@@ -131,7 +155,16 @@ fs.readFile(argv.input, function(err, fileData) {
 			workingObject.materialtype = staticType || item[typeField];
 		}
 
-		if (placeField && item[placeField]) {
+		if (placeIdField) {
+			var placeIds = item[placeIdField].split(',');
+
+			workingObject.places = _.map(placeIds, function(placeId) {
+				return {
+					id: placeId
+				};
+			});
+		}
+		else if (placeField && item[placeField]) {
 			workingObject.places = [item[placeField]];
 		}
 
@@ -222,6 +255,20 @@ fs.readFile(argv.input, function(err, fileData) {
 			}
 
 			workingObject.media = [mediaObject];
+		}
+
+		if (metadataFields) {
+			workingObject.metadata = [];
+			var metadataFieldStrs = metadataFields.split(',');
+
+			_.each(metadataFieldStrs, function(metadataFieldStr) {
+				var metadataFieldObj = metadataFieldStr.split(':');
+
+				workingObject.metadata.push({
+					type: metadataFieldObj[0],
+					value: item[metadataFieldObj[1]]
+				});
+			});
 		}
 
 		if (argv.trace && argv.trace == 'true') {

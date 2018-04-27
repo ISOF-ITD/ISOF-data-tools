@@ -3,7 +3,7 @@ var fs = require('fs');
 var path = require('path');
 
 if (process.argv.length < 5) {
-	console.log('node jsonCollectFiles.js --input=[input json file] -output=[output bat file] --file_location=[path containing the files] --file_location_prefix=[prefix the paths in input json] --copy_to[path to copy files to] --filename_field=[field containing the filenames] --split_filename_field=[yes|no]');
+	console.log('node jsonCollectFiles.js --input=[input json file] --output=[output bat file] --file_location=[path containing the files] --file_location_prefix=[prefix the paths in input json] --copy_to[path to copy files to] --filename_field=[field containing the filenames] --split_filename_field=[yes|no]');
 
 	return;
 }

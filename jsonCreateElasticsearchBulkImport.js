@@ -2,42 +2,56 @@ var fs = require('fs');
 var _ = require('underscore');
 
 if (process.argv.length < 5) {
-	console.log('node jsonCreateElasticsearchBulkImport.js [id field] [index name] [input json file] [output json file]');
+	console.log('node jsonCreateElasticsearchBulkImport.js --input=[input json file] --output[output json file] --type=[document type] --bulkAction=[index|update] --idField=[id field] --index=[index name]');
 
 	return;
 }
 
-var idField = process.argv[2];
+var argv = require('minimist')(process.argv.slice(2));
 
-fs.readFile(process.argv[4], function(err, fileData) {
+var idField = argv.idField;
+
+fs.readFile(argv.input, function(err, fileData) {
 	var outputData = '';
 	var data = JSON.parse(fileData);
 
 	var counter = 0;
 
+	var bulkAction = argv.bulkAction || 'index';
+
 	_.each(data, function(item, index) {
-		var bulkHeader = {
-			index: {
-				_index: process.argv[3],
-				_id: item[idField]
-			}
+		var bulkHeader = {};
+		bulkHeader[bulkAction] = {
+			_index: argv.index,
+			_type: argv.type,
+			_id: item[idField]
 		};
+
 		outputData += JSON.stringify(bulkHeader)+'\n';
 
-		delete item[idField];
+		var dataItem;
 
-		outputData += JSON.stringify(item)+'\n';
+		if (argv.bulkAction && argv.bulkAction == 'update') {
+			dataItem = {
+				doc: item
+			};
+		}
+		else {
+			dataItem = item;
+		}
+
+		outputData += JSON.stringify(dataItem)+'\n';
 
 		counter++;
 	});
 
-	fs.writeFile(process.argv[5], outputData, function(error) {
+	fs.writeFile(argv.output, outputData, function(error) {
 		if (error) {
 			console.log(error);
 		}
 		else {
 			console.log('Done!');
-			console.log(process.argv[4]+' formatted as Elasticsearch bulk file, '+counter+' entries written to '+process.argv[5]);
+			console.log(argv.input+' formatted as Elasticsearch bulk file, '+counter+' entries written to '+process.argv[5]);
 		}
 	});
 });

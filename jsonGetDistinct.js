@@ -14,4 +14,5 @@ fs.readFile(process.argv[2], function(err, fileData) {
 
 	console.log('Distinct "'+process.argv[3]+'" values:');
 	console.log(distinct);
+	console.log('Count '+distinct.length);
 });

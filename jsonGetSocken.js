@@ -63,7 +63,9 @@ fs.readFile(argv.input, 'utf-8', function(error, fileData) {
 
 			query = 'SELECT socken.id, socken.name, socken.lmId, socken.harad harad_id, harad.lan, harad.landskap, harad.name harad_name, socken.lat, socken.lng FROM socken INNER JOIN harad ON socken.harad = harad.id WHERE socken.name COLLATE UTF8_GENERAL_CI LIKE "%'+searchSocken+'%" AND (harad.lan COLLATE UTF8_GENERAL_CI LIKE "%'+searchLandskap+'%" OR harad.landskap COLLATE UTF8_GENERAL_CI LIKE "%'+searchLandskap+'%")';
 		}
-		console.log(query);
+
+		console.log((jsonIndex+1)+': '+searchSocken+', '+searchLandskap);
+
 		connection.query(query, function(error, results) {
 			if (error) {
 				console.log(error);
