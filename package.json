@@ -28,6 +28,7 @@
     "minimist": "^1.2.0",
     "mysql": "^2.15.0",
     "natural": "^0.5.0",
+    "node-fetch": "^2.1.2",
     "node-snowball": "^0.2.0",
     "stopword": "^0.1.1",
     "stopwords": "0.0.5"
