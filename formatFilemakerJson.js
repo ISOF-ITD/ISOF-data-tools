@@ -2,7 +2,7 @@ var fs = require('fs');
 var _ = require('underscore');
 
 if (process.argv.length < 5) {
-	console.log('node formatFilemakerJson.js --idField=[id field] --joinIdField=[id field to append to main id]--archiveIdField=[archive id field] --input=[input json file] --output=[output json file] --materialType=[materialType] --staticCategories=[category id comma seperated] --categoryIdField=[categoryIdField] --categoryNameField=[categoryNameField] --idPrefix=[id prefix] --reversePersonName=[yes|no] --personIdPrefix=[person id prefix] --personNamesAsTitle=[yes|no] --personNamesTitleFilter=[c|i] --titlePrefix=[title prefix] --formatMediaTitles=[yes|no] --mediaField=[media field]');
+	console.log('node formatFilemakerJson.js --idField=[id field] --joinIdField=[id field to append to main id] --archiveIdField=[archive id field (accessionnummer)] --uniqueArchiveIdField=[unique number (!Acc)] --archiveField=[archive field] --staticArchive=[static archive] --input=[input json file] --output=[output json file] --materialType=[materialType] --staticCategories=[category id comma seperated] --categoryField=[categoryField] --idPrefix=[id prefix] --reversePersonName=[yes|no] --personIdPrefix=[person id prefix] --personNamesAsTitle=[yes|no] --personNamesTitleFilter=[c|i] --titlePrefix=[title prefix] --formatMediaTitles=[yes|no] --mediaField=[media field] --informantCodes=[number used to identify informants, seperated by comma] --collectorCodes=[numbers used t identify collector, seperated by comma]');
 
 	return;
 }
@@ -11,14 +11,23 @@ var argv = require('minimist')(process.argv.slice(2));
 
 var idField = argv.idField;
 var joinIdField = argv.joinIdField;
+
 var archiveIdField = argv.archiveIdField;
+var archiveField = argv.archiveField;
+var staticArchive = argv.staticArchive;
+var uniqueArchiveIdField = argv.uniqueArchiveIdField;
+
 var idPrefix = argv.idPrefix || '';
-var categoryIdField = argv.categoryIdField;
-var categoryNameField = argv.categoryNameField;
+
+var categoryField = argv.categoryField;
 var staticCategories = argv.staticCategories;
+
 var materialType = argv.materialType;
+
 var mediaField = argv.mediaField;
+
 var personIdPrefix = argv.personIdPrefix || '';
+
 var titlePrefix = argv.titlePrefix || '';
 
 var getGender = function(gender) {
@@ -40,6 +49,9 @@ var getGender = function(gender) {
 	}
 }
 
+var informantCodes = argv.informantCodes.toString().split(',');
+var collectorCodes = argv.collectorCodes.toString().split(',');
+
 var getRelation = function(relation) {
 	/*
 	c = upptecknare
@@ -48,7 +60,17 @@ var getRelation = function(relation) {
 	*/
 //	return relation == '1' || relation == '6' ? 'c' : relation == '7' ? 'i' : '';
 //	return relation == '7' ? 'c' : relation == '8' ? 'i' : '';
-	return relation == '1' ? 'c' : relation == '7' ? 'i' : '';
+//	return relation == '1' ? 'c' : relation == '7' ? 'i' : '';
+
+	if (informantCodes.indexOf(relation) > -1) {
+		return 'i';
+	}
+	else if (collectorCodes.indexOf(relation) > -1) {
+		return 'c';
+	}
+	else {
+		return '';
+	}
 }
 
 var createPersonObject = function(item) {
@@ -114,9 +136,9 @@ fs.readFile(argv.input, function(err, fileData) {
 				year: item['Inl_from'],
 				archive: {
 					total_pages: item['Form Acc_Alla::Omfång'] || null,
-					archive_id: item[archiveIdField || idField],
+					archive_id: item[archiveIdField || idField]+(uniqueArchiveIdField ? ' ('+item[uniqueArchiveIdField]+')' : ''),
 					country: 'sweden',
-					archive: 'DFU'
+					archive: staticArchive ? staticArchive : archiveField ? item[archiveField] : null
 				}
 			};
 
@@ -129,13 +151,12 @@ fs.readFile(argv.input, function(err, fileData) {
 					};
 				})
 			}
-			else if (categoryIdField != undefined && categoryIdField != '' && categoryNameField != undefined && categoryNameField != '') {
-				workingObject.taxonomy = [
-					{
-						category: item[categoryIdField],
-						name: item[categoryNameField]
-					}
-				];
+			else if (categoryField != undefined && categoryField != '') {
+				workingObject.taxonomy = _.map(item[categoryField].split(','), function(category) {
+					return {
+						category: category
+					};
+				});
 			}
 
 			if (item['Pers::PersId'].length > 0) {

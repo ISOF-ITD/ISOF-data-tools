@@ -32,20 +32,25 @@ var processItem = function() {
 		if (argv.titleField) {
 			console.log((currentItem+1)+': '+item[argv.titleField]);
 		}
-		var dom = new JSDOM(html)
+		try {
+			var dom = new JSDOM(html.split('<p').join('\r\n<p').split('<div').join('\r\n<div').split('<br').join('\r\n<br'))
 
-		var document = dom.window.document;
+			var document = dom.window.document;
 
-		var rubrik = document.getElementById('Rubrik');
+			var rubrik = document.getElementById('Rubrik');
 
-		if (rubrik) {
-			mainElement = rubrik.parentElement.parentElement;
+			if (rubrik) {
+				mainElement = rubrik.parentElement.parentElement;
 
-			var short_text = rubrik.parentElement.parentElement.getElementsByTagName('p')[0].textContent;
-			var full_text = document.getElementsByClassName('pagecontent')[0].textContent;
+				var short_text = rubrik.parentElement.parentElement.getElementsByTagName('p')[0].textContent;
+				var full_text = document.getElementsByClassName('pagecontent')[0].textContent;
 
-			item[argv.destinationField+'_short'] = short_text;
-			item[argv.destinationField+'_full'] = full_text;
+				item[argv.destinationField+'_short'] = short_text;
+				item[argv.destinationField+'_full'] = full_text;
+			}
+		}
+		catch (e) {
+			console.log(e);
 		}
 
 		if (fileData.length-1 > currentItem) {

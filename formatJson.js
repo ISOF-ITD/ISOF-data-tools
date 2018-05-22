@@ -3,7 +3,7 @@ var path = require('path');
 var _ = require('underscore');
 
 if (process.argv.length < 5) {
-	console.log('node formatJson.js --input=[input json file] --output=[output json file] --idField --idPrefix --titleField --titleFields --titleFieldsSeparator --titlePrefix --staticTitle --textField --staticText --countryField --staticCountry --yearField --taxonomyField --staticTaxonomy --archiveIdField --archiveField --staticArchive --typeField --staticType --placeField --placeIdField --informantNameField --informantNameFields --informantIdField --informantGenderField --informantBirthYearField --collectorNameField --collectorNameFields --collectorIdField --collectorGenderField --collectorBirthYearField --personIdPrefix --personNameFieldsSeparator --mediaSourceField --mediaSourcePrefix --mediaSourceSuffix --mediaTypeField --staticMediaType --trace=[true|false] --metadataFields=[metadata_type:value_field,metadata_type:value_field,...]');
+	console.log('node formatJson.js --input=[input json file] --output=[output json file] --idField --idPrefix --startId --titleField --titleFields --titleFieldsSeparator --titlePrefix --staticTitle --textField --staticText --countryField --staticCountry --yearField --taxonomyField --staticTaxonomy --archiveIdField --archiveField --staticArchive --typeField --staticType --placeField --placeIdField --informantNameField --informantNameFields --informantIdField --informantGenderField --informantBirthYearField --collectorNameField --collectorNameFields --collectorIdField --collectorGenderField --collectorBirthYearField --personIdPrefix --personNameFieldsSeparator --mediaSourceField --mediaSourcePrefix --mediaSourceSuffix --mediaTypeField --staticMediaType --trace=[true|false] --metadataFields=[metadata_type:value_field,metadata_type:value_field,...]');
 
 	return;
 }
@@ -22,6 +22,7 @@ var validateDate = function(dateStr) {
 }
 
 var idField = argv.idField;
+var startId = argv.startId;
 var idPrefix = argv.idPrefix;
 
 var titleField = argv.titleField;
@@ -80,15 +81,24 @@ var mediaTitleField = argv.mediaTitleField;
 var staticMediaTitle = argv.staticMediaTitle;
 
 fs.readFile(argv.input, function(err, fileData) {
+	console.log('Formating '+argv.input);
+
 	var data = JSON.parse(fileData);
 
 	var processedData = [];
+
+	var currentId = startId ? Number(startId) : null;
 
 	_.each(data, function(item, index) {
 		var workingObject = {};
 
 		if (idField && item[idField]) {
 			workingObject.id = (idPrefix || '')+item[idField];
+		}
+		else if (startId) {
+			workingObject.id = (idPrefix || '')+currentId;
+
+			currentId++;
 		}
 
 		if (titleField || titleFields || staticTitle) {
@@ -133,8 +143,11 @@ fs.readFile(argv.input, function(err, fileData) {
 			}]);
 		}
 
+		var archiveObject = {
+			country: 'sweden'
+		};
+
 		if (archiveField || archiveIdField || staticArchive || countryField || staticCountry) {
-			var archiveObject = {};
 
 			if (archiveField || staticArchive) {
 				archiveObject.archive = staticArchive ? staticArchive : item[archiveField];
@@ -143,13 +156,16 @@ fs.readFile(argv.input, function(err, fileData) {
 			if (countryField || staticCountry) {
 				archiveObject.country = staticCountry ? staticCountry : item[countryField];
 			}
+			else {
+				archiveObject.country = 'sweden';
+			}
 
 			if (archiveIdField) {
 				archiveObject.archive_id = item[archiveIdField];
 			}
-
-			workingObject.archive = archiveObject;
 		}
+
+		workingObject.archive = archiveObject;
 
 		if (typeField || staticType) {
 			workingObject.materialtype = staticType || item[typeField];

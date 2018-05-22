@@ -7,7 +7,7 @@ var fetch = require('node-fetch');
 var config = require('./config')
 
 if (process.argv.length < 4) {
-	console.log('node jsonInsertSockenID.js --input=[input json file] --output=[output json file] --landskap_field=[landskap field] --socken_field[socken field] --socken_id_field=[socken_id field] --report=[write not-found report (yes|no)] --useMySql=[yes|no');
+	console.log('node jsonInsertSockenID.js --input=[input json file] --output=[output json file] --landskap_field=[landskap field] --socken_field[socken field] --socken_id_field=[socken_id field] --destination_field=[field to write socken info to (defaults to "socken")] --report=[write not-found report (yes|no)] --useMySql=[yes|no');
 
 	return;
 }
@@ -17,7 +17,7 @@ var argv = require('minimist')(process.argv.slice(2));
 var landskapField = argv.landskap_field;
 var sockenField = argv.socken_field;
 
-if (argv.useMySql) {
+if (argv.useMySql == 'yes') {
 	var connection = mysql.createConnection({
 		host: config.host,
 		user: config.user,
@@ -28,7 +28,7 @@ if (argv.useMySql) {
 	connection.connect();
 }
 else {
-	var apiUrl = 'http://frigg-test.sprakochfolkminnen.se/sagendatabas/api/locations';
+	var apiUrl = 'http://frigg.sprakochfolkminnen.se/sagendatabas/api/locations';
 }
 
 fs.readFile(argv.input, 'utf-8', function(error, fileData) {
@@ -59,7 +59,7 @@ fs.readFile(argv.input, 'utf-8', function(error, fileData) {
 	function processItem() {
 		var item = fileJson[jsonIndex];
 
-		if (argv.useMySql) {
+		if (argv.useMySql == 'yes') {
 			/*
 			Använd mysql databas, sök i socken och harad tabeller
 			*/
@@ -115,7 +115,7 @@ fs.readFile(argv.input, 'utf-8', function(error, fileData) {
 				if (foundSocken) {
 					console.log('Found: '+foundSocken.name+', '+foundSocken.lan);
 
-					item.socken = {
+					item[argv.destination_field || 'socken'] = {
 						id: foundSocken.id,
 						name: foundSocken.name,
 						location: {
@@ -158,7 +158,6 @@ fs.readFile(argv.input, 'utf-8', function(error, fileData) {
 			var params;
 			if (argv.socken_id_field && argv.socken_id_field != '') {
 				var searchSockenId = item[argv.socken_id_field];
-				query = 'SELECT socken.id, socken.name, socken.lmId, socken.harad harad_id, harad.lan, harad.landskap, harad.name harad_name, socken.lat, socken.lng FROM socken INNER JOIN harad ON socken.harad = harad.id WHERE socken.socken_id = "'+searchSockenId+'"';
 			}
 			else {
 				var searchSocken = item[sockenField].replace(' sn', '').replace(' Sn', '')
@@ -179,15 +178,15 @@ fs.readFile(argv.input, 'utf-8', function(error, fileData) {
 
 				searchSocken = searchSocken.toLowerCase();
 
-				var searchLandskap = item[landskapField].replace(' län', '').replace('län', '').toLowerCase();
+				var searchLandskap = landskapField ? item[landskapField].replace(' län', '').replace('län', '').toLowerCase() : null;
 
-				params = '?socken_name='+searchSocken+'&landskap_name='+searchLandskap;
+				params = '?socken_name='+searchSocken+(searchLandskap ? '&landskap_name='+searchLandskap : '')+'&format=json';
 			}
 
 			console.log((jsonIndex+1)+': '+searchSocken+', '+searchLandskap);
 
 			fetch(apiUrl+params)
-				.then(function(response) {
+				.then(function(response, error) {
 					return response.json();
 				})
 				.then(function(json) {
@@ -207,7 +206,7 @@ fs.readFile(argv.input, 'utf-8', function(error, fileData) {
 					if (foundSocken) {
 						console.log('Found: '+foundSocken.name+', '+foundSocken.landskap);
 
-						item.socken = foundSocken;
+						item[argv.destination_field || 'socken'] = foundSocken;
 					}
 
 					if (json.results.length == 0 || !foundSocken) {
@@ -228,6 +227,12 @@ fs.readFile(argv.input, 'utf-8', function(error, fileData) {
 				})
 				.catch(function(error) {
 					console.log(error);
+					if (jsonIndex < fileJson.length-1) {
+						jsonIndex++;
+
+						processItem();
+
+					}
 				});
 
 			return;
