@@ -32,6 +32,7 @@
     "node-snowball": "^0.2.0",
     "snowball": "^0.3.1",
     "stopword": "^0.1.1",
-    "stopwords": "0.0.5"
+    "stopwords": "0.0.5",
+    "striptags": "3.1.1"
   }
 }
