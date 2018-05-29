@@ -80,6 +80,25 @@ var staticMediaType = argv.staticMediaType;
 var mediaTitleField = argv.mediaTitleField;
 var staticMediaTitle = argv.staticMediaTitle;
 
+var formatGender = function(gender) {
+	if (gender == 'K' ||
+		gender == 'k' ||
+		gender == 'kv' ||
+		gender == 'Kv') {
+		return 'female';
+	}
+	else if (gender == 'Ma' ||
+		gender == 'M' ||
+		gender == 'm' ||
+		gender == 'ma' ||
+		gender == 'Ma') {
+		return 'male'
+	}
+	else {
+		return 'unknown';
+	}
+}
+
 fs.readFile(argv.input, function(err, fileData) {
 	console.log('Formating '+argv.input);
 
@@ -233,7 +252,7 @@ fs.readFile(argv.input, function(err, fileData) {
 				}
 
 				if (personGenderField) {
-					personObject.gender = item[personGenderField];
+					personObject.gender = formatGender(item[personGenderField]);
 				}
 
 				if (personBirthYearField) {

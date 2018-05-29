@@ -1,12 +1,19 @@
 var fs = require('fs');
 var _ = require('underscore');
 
+/*
+
+Script som formaterar export ur Filemaker till import json fil för Sagenkarta-importer/mysq-import-json.js
+
+*/
+
 if (process.argv.length < 5) {
 	console.log('node formatFilemakerJson.js --idField=[id field] --joinIdField=[id field to append to main id] --archiveIdField=[archive id field (accessionnummer)] --uniqueArchiveIdField=[unique number (!Acc)] --archiveField=[archive field] --staticArchive=[static archive] --input=[input json file] --output=[output json file] --materialType=[materialType] --staticCategories=[category id comma seperated] --categoryField=[categoryField] --idPrefix=[id prefix] --reversePersonName=[yes|no] --personIdPrefix=[person id prefix] --personNamesAsTitle=[yes|no] --personNamesTitleFilter=[c|i] --titlePrefix=[title prefix] --formatMediaTitles=[yes|no] --mediaField=[media field] --informantCodes=[number used to identify informants, seperated by comma] --collectorCodes=[numbers used t identify collector, seperated by comma]');
 
 	return;
 }
 
+// Hämtar alla arguments i formet "--arg=value"
 var argv = require('minimist')(process.argv.slice(2));
 
 var idField = argv.idField;
@@ -30,22 +37,23 @@ var personIdPrefix = argv.personIdPrefix || '';
 
 var titlePrefix = argv.titlePrefix || '';
 
+// Standardiserar kön
 var getGender = function(gender) {
 	if (gender == 'K' ||
 		gender == 'k' ||
 		gender == 'kv' ||
 		gender == 'Kv') {
-		return 'k';
+		return 'female';
 	}
 	else if (gender == 'Ma' ||
 		gender == 'M' ||
 		gender == 'm' ||
 		gender == 'ma' ||
 		gender == 'Ma') {
-		return 'm'
+		return 'male'
 	}
 	else {
-		return 'o';
+		return 'unknown';
 	}
 }
 
@@ -73,6 +81,7 @@ var getRelation = function(relation) {
 	}
 }
 
+// Skapar person objekt med namn, id, kön och relation
 var createPersonObject = function(item) {
 	var personName = item['Pers::Namn'] ? (argv.reversePersonName && argv.reversePersonName == 'yes' ? item['Pers::Namn'].split(', ').reverse().join(' ') : item['Pers::Namn']) : 'Okänt';
 	personName = personName.split('\n').join('');
@@ -91,6 +100,7 @@ var createPersonObject = function(item) {
 	return personObj;
 }
 
+// Skapar media obect
 var createMediaObject = function(mp3File, mediaTitles, item) {
 	var fileName = mp3File.split("\n")[0];
 	var fullPath = mp3File.split("\n")[1];
@@ -115,6 +125,7 @@ var createMediaObject = function(mp3File, mediaTitles, item) {
 	};
 }
 
+// Läser input filen
 fs.readFile(argv.input, function(err, fileData) {
 	var data = JSON.parse(fileData);
 
@@ -125,9 +136,13 @@ fs.readFile(argv.input, function(err, fileData) {
 	var mediaTitles;
 
 	_.each(data, function(item, index) {
+		// Kör igenom varje rad
+
+		// Skapar id om id finns i raden
 		var itemId = item[idField] && item[idField] != '' ? item[idField]+(joinIdField ? '_'+item[joinIdField] : '') : null;
 
 		if (itemId) {
+			// Om itemId är inte null, då lägger vi nytt objekt till workingObject med grundmetadata
 			workingObject = {
 				id: idPrefix+itemId,
 				title: titlePrefix+item['Titel_Allt'],
@@ -201,6 +216,7 @@ fs.readFile(argv.input, function(err, fileData) {
 			}
 		}
 		else {
+			// Om itemId är null fortsätter vi arbeta med workingObject och lägger till fler socknar, personer eller media till det
 			if (item['Pers::PersId'].length > 0) {
 				var personObj = createPersonObject(item);
 
