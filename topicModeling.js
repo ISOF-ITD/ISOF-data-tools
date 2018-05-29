@@ -52,7 +52,10 @@ function createModels() {
 		sort: 'id',
 		scroll: '120s'
 	}, function fetchMore(error, response) {
-		if (!response.hits) {
+		if (error || !response || !response.hits) {
+			if (error) {
+				console.log(error);
+			}
 			console.log(response);
 		}
 
