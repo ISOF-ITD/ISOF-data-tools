@@ -18,13 +18,19 @@
   "homepage": "https://github.com/ISOF-ITD/ISOF-data-tools#readme",
   "dependencies": {
     "@turf/turf": "^4.4.0",
+    "csv-parse": "^2.2.0",
+    "elasticsearch": "^14.2.2",
     "fast-levenshtein": "^2.0.6",
     "java": "^0.8.0",
+    "jsdom": "^11.8.0",
     "lda": "^0.1.9",
     "matilda": "0.0.2",
     "minimist": "^1.2.0",
+    "mysql": "^2.15.0",
     "natural": "^0.5.0",
+    "node-fetch": "^2.1.2",
     "node-snowball": "^0.2.0",
+    "snowball": "^0.3.1",
     "stopword": "^0.1.1",
     "stopwords": "0.0.5"
   }

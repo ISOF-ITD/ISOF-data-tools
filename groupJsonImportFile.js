@@ -26,25 +26,25 @@ fs.readFile(argv.input, function(err, fileData) {
 				var doesMatch = argv.groupByDate == 'yes' ? filterItem.year == item.year : false && !filterItem.found;
 
 				if (argv.groupByPersons == 'yes') {
-					var itemPersons = _.uniq(item.persons.map(function(person){
+					var itemPersons = item.persons ? _.uniq(item.persons.map(function(person){
 						return person.id+' '+person.relation;
-					})).sort();
+					})).sort() : ['item.persons = null'];
 
-					var filterItemPersons = _.uniq(filterItem.persons.map(function(person){
+					var filterItemPersons = filterItem.persons ? _.uniq(filterItem.persons.map(function(person){
 						return person.id+' '+person.relation;
-					})).sort();
+					})).sort() : ['filterItem.persons = null'];
 
 					doesMatch = doesMatch && itemPersons.join(',') == filterItemPersons.join(',');
 				}
 
 				if (argv.groupByPlaces == 'yes') {
-					var itemPlaces = _.uniq(item.persons.map(function(place){
+					var itemPlaces = item.places ? _.uniq(item.places.map(function(place){
 						return place.id;
-					})).sort();
+					})).sort() : ['item.places = null'];
 
-					var filterItemPlaces = _.uniq(filterItem.persons.map(function(place){
+					var filterItemPlaces = filterItem.places ? _.uniq(filterItem.places.map(function(place){
 						return place.id;
-					})).sort();
+					})).sort() : ['filterItem.place = null'];
 
 					doesMatch = doesMatch && itemPlaces.join(',') == filterItemPlaces.join(',');
 				}

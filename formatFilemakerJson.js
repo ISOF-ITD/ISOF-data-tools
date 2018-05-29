@@ -1,43 +1,64 @@
 var fs = require('fs');
 var _ = require('underscore');
 
+/*
+
+Script som formaterar export ur Filemaker till import json fil för Sagenkarta-importer/mysq-import-json.js
+
+*/
+
 if (process.argv.length < 5) {
-	console.log('node formatFilemakerJson.js --idField=[id field] --joinIdField=[id field to append to main id]--archiveIdField=[archive id field] --input=[input json file] --output=[output json file] --materialType=[materialType] --categoryIdField=[categoryIdField] --categoryNameField=[categoryNameField] --idPrefix=[id prefix] --reversePersonName=[yes|no] --personIdPrefix=[person id prefix] --personNamesAsTitle=[yes|no] --personNamesTitleFilter=[c|i] --titlePrefix=[title prefix] --formatMediaTitles=[yes|no] --mediaField=[media field]');
+	console.log('node formatFilemakerJson.js --idField=[id field] --joinIdField=[id field to append to main id] --archiveIdField=[archive id field (accessionnummer)] --uniqueArchiveIdField=[unique number (!Acc)] --archiveField=[archive field] --staticArchive=[static archive] --input=[input json file] --output=[output json file] --materialType=[materialType] --staticCategories=[category id comma seperated] --categoryField=[categoryField] --idPrefix=[id prefix] --reversePersonName=[yes|no] --personIdPrefix=[person id prefix] --personNamesAsTitle=[yes|no] --personNamesTitleFilter=[c|i] --titlePrefix=[title prefix] --formatMediaTitles=[yes|no] --mediaField=[media field] --informantCodes=[number used to identify informants, seperated by comma] --collectorCodes=[numbers used t identify collector, seperated by comma]');
 
 	return;
 }
 
+// Hämtar alla arguments i formet "--arg=value"
 var argv = require('minimist')(process.argv.slice(2));
 
 var idField = argv.idField;
 var joinIdField = argv.joinIdField;
+
 var archiveIdField = argv.archiveIdField;
+var archiveField = argv.archiveField;
+var staticArchive = argv.staticArchive;
+var uniqueArchiveIdField = argv.uniqueArchiveIdField;
+
 var idPrefix = argv.idPrefix || '';
-var categoryIdField = argv.categoryIdField;
-var categoryNameField = argv.categoryNameField;
+
+var categoryField = argv.categoryField;
+var staticCategories = argv.staticCategories;
+
 var materialType = argv.materialType;
+
 var mediaField = argv.mediaField;
+
 var personIdPrefix = argv.personIdPrefix || '';
+
 var titlePrefix = argv.titlePrefix || '';
 
+// Standardiserar kön
 var getGender = function(gender) {
 	if (gender == 'K' ||
 		gender == 'k' ||
 		gender == 'kv' ||
 		gender == 'Kv') {
-		return 'k';
+		return 'female';
 	}
 	else if (gender == 'Ma' ||
 		gender == 'M' ||
 		gender == 'm' ||
 		gender == 'ma' ||
 		gender == 'Ma') {
-		return 'm'
+		return 'male'
 	}
 	else {
 		return 'unknown';
 	}
 }
+
+var informantCodes = argv.informantCodes.toString().split(',');
+var collectorCodes = argv.collectorCodes.toString().split(',');
 
 var getRelation = function(relation) {
 	/*
@@ -45,9 +66,22 @@ var getRelation = function(relation) {
 	i = informant
 	recorder = intervjuare
 	*/
-	return relation == '1' || relation == '6' || relation == '8' ? 'c' : relation == '7' ? 'i' : '';
+//	return relation == '1' || relation == '6' ? 'c' : relation == '7' ? 'i' : '';
+//	return relation == '7' ? 'c' : relation == '8' ? 'i' : '';
+//	return relation == '1' ? 'c' : relation == '7' ? 'i' : '';
+
+	if (informantCodes.indexOf(relation) > -1) {
+		return 'i';
+	}
+	else if (collectorCodes.indexOf(relation) > -1) {
+		return 'c';
+	}
+	else {
+		return '';
+	}
 }
 
+// Skapar person objekt med namn, id, kön och relation
 var createPersonObject = function(item) {
 	var personName = item['Pers::Namn'] ? (argv.reversePersonName && argv.reversePersonName == 'yes' ? item['Pers::Namn'].split(', ').reverse().join(' ') : item['Pers::Namn']) : 'Okänt';
 	personName = personName.split('\n').join('');
@@ -66,18 +100,23 @@ var createPersonObject = function(item) {
 	return personObj;
 }
 
+// Skapar media obect
 var createMediaObject = function(mp3File, mediaTitles, item) {
 	var fileName = mp3File.split("\n")[0];
 	var fullPath = mp3File.split("\n")[1];
 
 	var mediaId = fileName.split(/file:SK([0-9]+)([A-Z])/g);
-console.log(item)
+
 	var mediaTitle = _.find(mediaTitles, function(item) {
 		var regExString = '\\('+Number(mediaId[1])+' '+mediaId[2]+'[ (I|V]*\\)';
 		var regEx = new RegExp(regExString);
 
 		return item.match(regEx);
 	}) || item[idField];
+
+	if (item['Titel_Allt'] && item['Titel_Allt'] != '') {
+		mediaTitle = item['Titel_Allt'];
+	}
 
 	return {
 		source: fileName.indexOf('filewin://') > -1 ? fileName.split('/')[fileName.split('/').length-1] : fileName.replace('file:', ''),
@@ -86,6 +125,7 @@ console.log(item)
 	};
 }
 
+// Läser input filen
 fs.readFile(argv.input, function(err, fileData) {
 	var data = JSON.parse(fileData);
 
@@ -96,9 +136,13 @@ fs.readFile(argv.input, function(err, fileData) {
 	var mediaTitles;
 
 	_.each(data, function(item, index) {
+		// Kör igenom varje rad
+
+		// Skapar id om id finns i raden
 		var itemId = item[idField] && item[idField] != '' ? item[idField]+(joinIdField ? '_'+item[joinIdField] : '') : null;
 
 		if (itemId) {
+			// Om itemId är inte null, då lägger vi nytt objekt till workingObject med grundmetadata
 			workingObject = {
 				id: idPrefix+itemId,
 				title: titlePrefix+item['Titel_Allt'],
@@ -107,19 +151,27 @@ fs.readFile(argv.input, function(err, fileData) {
 				year: item['Inl_from'],
 				archive: {
 					total_pages: item['Form Acc_Alla::Omfång'] || null,
-					archive_id: item[archiveIdField || idField],
+					archive_id: item[archiveIdField || idField]+(uniqueArchiveIdField ? ' ('+item[uniqueArchiveIdField]+')' : ''),
 					country: 'sweden',
-					archive: 'DFU'
+					archive: staticArchive ? staticArchive : archiveField ? item[archiveField] : null
 				}
 			};
 
-			if (categoryIdField != undefined && categoryIdField != '' && categoryNameField != undefined && categoryNameField != '') {
-				workingObject.taxonomy = [
-					{
-						category: item[categoryIdField],
-						name: item[categoryNameField]
-					}
-				];
+			if (staticCategories) {
+				var categories = staticCategories.split(',');
+
+				workingObject.taxonomy = _.map(categories, function(category) {
+					return {
+						category: category
+					};
+				})
+			}
+			else if (categoryField != undefined && categoryField != '') {
+				workingObject.taxonomy = _.map(item[categoryField].split(','), function(category) {
+					return {
+						category: category
+					};
+				});
 			}
 
 			if (item['Pers::PersId'].length > 0) {
@@ -136,17 +188,24 @@ fs.readFile(argv.input, function(err, fileData) {
 				workingObject.places = [item.socken];
 			}
 
-			if (argv.formatMediaTitles == 'yes' && item[mediaField] != '') {
-				mediaTitles = item.Titel_Allt.split('\n \n').join('\n\n').split('\n\n');
+			if (argv.formatMediaTitles == 'yes' || item[mediaField] != '') {
+				if (argv.formatMediaTitles == 'yes') {
+					mediaTitles = item.Titel_Allt.split('\n \n').join('\n\n').split('\n\n');
+				}
+				else {
+					mediaTitles = [];
+				}
 
 				if (!workingObject.metadata) {
 					workingObject.metadata = [];
 				}
 
-				workingObject.metadata.push({
-					type: 'dialektkarta_titlar',
-					value: item.Titel_Allt
-				});
+				if (argv.formatMediaTitles == 'yes') {
+					workingObject.metadata.push({
+						type: 'dialektkarta_titlar',
+						value: item.Titel_Allt
+					});
+				}
 
 				// Om vi har media titles, då sätter vi text till ''
 				if (mediaTitles.length > 1) {
@@ -157,6 +216,7 @@ fs.readFile(argv.input, function(err, fileData) {
 			}
 		}
 		else {
+			// Om itemId är null fortsätter vi arbeta med workingObject och lägger till fler socknar, personer eller media till det
 			if (item['Pers::PersId'].length > 0) {
 				var personObj = createPersonObject(item);
 
@@ -170,7 +230,7 @@ fs.readFile(argv.input, function(err, fileData) {
 				workingObject.places.push(item.socken);
 			}
 
-			if (argv.formatMediaTitles == 'yes' && item[mediaField] != '') {
+			if (argv.formatMediaTitles == 'yes' || item[mediaField] != '') {
 				workingObject.media.push(createMediaObject(item[mediaField], mediaTitles, item));
 			}
 		}
@@ -204,7 +264,7 @@ fs.readFile(argv.input, function(err, fileData) {
 
 				workingObject.title = titlePrefix+title;
 
-				if (mediaTitles.length == 1 && workingObject.media.length == 1 && workingObject.media[0].title == '') {
+				if (mediaTitles.length == 1 && workingObject.media &&  workingObject.media.length == 1 && workingObject.media[0].title == '') {
 					workingObject.text = mediaTitles[0];
 				}
 			}

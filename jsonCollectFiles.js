@@ -1,10 +1,9 @@
 var _ = require('underscore');
 var fs = require('fs');
 var path = require('path');
-var levenshtein = require('fast-levenshtein');
 
 if (process.argv.length < 5) {
-	console.log('node jsonCollectFiles.js --input=[input json file] --file_location=[path containing the files] --file_location_prefix=[prefix the paths in input json] --copy_to[path to copy files to] --filename_field=[field containing the filenames] --split_filename_field=[yes|no]');
+	console.log('node jsonCollectFiles.js --input=[input json file] --output=[output bat file] --file_location=[path containing the files] --file_location_prefix=[prefix the paths in input json] --copy_to[path to copy files to] --filename_field=[field containing the filenames] --split_filename_field=[yes|no]');
 
 	return;
 }
@@ -17,6 +16,8 @@ var outputFolder = argv.copy_to;
 var filenameField = argv.filename_field;
 var splitFilenameField = argv.split_filename_field;
 
+var strOutput = '';
+
 fs.readFile(argv.input, 'utf-8', function(error, fileData) {
 	var data = JSON.parse(fileData);
 
@@ -25,18 +26,35 @@ fs.readFile(argv.input, 'utf-8', function(error, fileData) {
 			var filePath = item[filenameField].split('/').join('\\');
 
 			if (splitFilenameField) {
-				filePath = filePath.split('\n').length == 1 ? filePath.split('\n')[0] : filePath.split('\n')[1];
+				filePath = (filePath.split('\n').length == 1 ? filePath.split('\n')[0] : filePath.split('\n')[1]).replace('filewin:', '');
 			}
 			var fileName = path.basename(filePath);
 
-			fileName = fileName.replace('filewin:', '');
+			fileName = fileName;
 
 			var copyToPath = path.format({
 				dir: outputFolder,
 				base: fileName
 			});
 
-			console.log('xcopy /I /Y "'+filePath+'" "'+outputFolder+'"');
+			var copyCommand = 'xcopy /I /Y "'+filePath+'" "'+outputFolder+'"';
+			strOutput += copyCommand+'\n';
+
+			if (!argv.output) {
+				console.log(copyCommand);
+			}
 		}
-	})
+	});
+
+	if (argv.output) {
+		fs.writeFile(argv.output, strOutput, function(error) {
+			if (error) {
+				console.log(error);
+			}
+			else {
+				console.log('Done!');
+				console.log('Output written to '+argv.output);
+			}
+		});
+	}
 });
