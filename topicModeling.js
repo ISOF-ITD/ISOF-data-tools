@@ -3,6 +3,13 @@ var elasticsearch = require('elasticsearch');
 
 var TopicModeling = require('./lib/topic-modeling');
 
+/*
+
+Stopwordslistan finns i node_modules/stopword/lib/stopwords_sv.js.
+Eftersom den inte är versionhanterat (inga filer inom node_modules är versionhanterat) lagras filen i lib men måste flyttast till node_modules/stopword/lib  och node_modules/lda/lib för att användas både för stopword och lda modulerna.
+
+*/
+
 if (process.argv.length < 5) {
 	console.log('node topicModeling.js --index=[es index name] --host=[es host] --login=[es login] --query=[es query] --topics_field=[es topics field (default topics)] --numtopics=[number of topics (default 10)] --numterms=[number of terms (default 10)]');
 
