@@ -10,7 +10,8 @@ if (process.argv.length < 4) {
 
 var parser = csvParse({
 	columns: true,
-	auto_parse: false
+	auto_parse: false,
+	delimiter: ";"
 }, function(err, data){
 	fs.writeFile(process.argv[3], JSON.stringify(data, null, 2), function(error) {
 		if (error) {
