@@ -91,6 +91,7 @@ var formatGender = function(gender) {
 		gender == 'M' ||
 		gender == 'm' ||
 		gender == 'ma' ||
+		gender == 'Man' ||
 		gender == 'Ma') {
 		return 'male'
 	}
@@ -239,12 +240,19 @@ fs.readFile(argv.input, function(err, fileData) {
 				if (personNameField || personNameFields) {
 					if (personNameFields) {
 						var fields = personNameFields.split(';');
+						// console.log(fields);
 
 						var fieldValues = _.map(fields, function(field) {
 							return item[field];
 						});
+						// console.log(fieldValues);
+						// console.log({}.toString.call(fieldValues).split(' ')[1].slice(0, -1).toLowerCase());
 
-						personObject.name = fieldValues.join(personNameFieldsSeparator || ' ');
+						var separator = ' ';
+						if (personNameFieldsSeparator) {
+							separator = personNameFieldsSeparator
+						};
+						personObject.name = fieldValues.join(separator);
 					}
 					else {
 						personObject.name = item[personNameField];
