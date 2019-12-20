@@ -9,15 +9,67 @@
 	<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,300,400italic" rel="stylesheet" type="text/css">
 	<link rel="stylesheet" href="css/leaflet.css"/>
 
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
 	<style type="text/css">
+		body {
+			font-family: 'Open Sans', sans-serif;
+		}
 		
 		#map {
 			position: fixed;
 
 			top: 0;
 			left: 0;
+			right: 340px;
+			bottom: 0;
+		}
+
+		#sockenList {
+			position: fixed;
+
+			top: 0;
 			right: 0;
 			bottom: 0;
+
+			width: 340px;
+		}
+
+		#sockenList .search-box {
+			position: absolute;
+
+			top: 20px;
+			left: 20px;
+		
+			width: 300px;
+		
+			padding: 10px;
+		
+			border-radius: 3px;
+			border: 1px solid #999;
+			box-sizing: border-box;
+		}
+
+		#sockenList .socken-list {
+			position: absolute;
+
+			top: 80px;
+			left: 20px;
+			right: 20px;
+			bottom: 20px;
+
+			overflow-y: auto;
+		}
+
+		#sockenList .socken-list .item {
+			display: block;
+
+			margin-bottom: 5px;
+			padding-bottom: 5px;
+
+			border-bottom: 1px solid #999;
+
+			cursor: pointer;
 		}
 
 		#sockenName {
@@ -34,7 +86,6 @@
 			border-radius: 4px;
 
 			font-size: 20px;
-			font-family: sans-serif;
 		}
 
 		.map-marker {
@@ -58,8 +109,19 @@
 
 <div id="map"></div>
 
+<div id="sockenList">
+	
+	<input type="text" placeholder="Sök socken, härad eller landskap" class="search-box" />
+
+	<div class="socken-list">
+		Laddar...
+	</div>
+
+</div>
+
 <div id="sockenName"></div>
 
+<script src="js/underscore-min.js"></script>
 <script src="js/app.js"></script>
 
 </body>
