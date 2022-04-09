@@ -25,7 +25,7 @@
     "jsdom": "^11.8.0",
     "lda": "^0.1.9",
     "matilda": "0.0.2",
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.6",
     "mysql": "^2.15.0",
     "natural": "^0.5.0",
     "node-fetch": "^2.1.2",
